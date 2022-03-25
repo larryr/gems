@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: infosrv
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: infosrv
+  template:
+    metadata:
+      labels:
+        name: infosrv
+    spec:
+      containers:
+        - name: infosrv
+          image: larryrau/infosrv:latest
+          ports:
+            - containerPort: 9999
+          env:
+            - name: APP_NAME
+              value: "InfoSrv"
+

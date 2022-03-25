@@ -1,0 +1,16 @@
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: infosrv
+  labels:
+    name: infosrv
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 9900
+    targetPort: 9999
+  selector:
+    name: infosrv
