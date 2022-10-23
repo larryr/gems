@@ -1,7 +1,5 @@
 module github.com/larryr/gems
 
-go 1.17
+go 1.19
 
-require (
-	golang.org/x/sys v0.0.0-20220317061510-51cd9980dadf
-)
+require golang.org/x/sys v0.1.0

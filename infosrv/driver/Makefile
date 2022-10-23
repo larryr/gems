@@ -4,17 +4,18 @@ help:
 	@echo "build    -- build local executable"
 	@echo "image    -- build container image"
 	@echo "toREG    -- push image to docker hub"
-	@echo "deploy   -- deploy as deployment and loadbalanced service"
-	@echo "redo     -- k8s redeploy"
-	@echo "delete  -- delete deployment & service"
-	@echo "mkpod    -- make a k8s pod"
-	@echo "delpod   -- delete k8s pod"
 	@echo "drun     -- run local docker image"
 	@echo "irun     -- run local docker image with shell"
-	@echo "logs     -- show logs for deployment (each pod)"
+	@echo "** k8s helpers **"
+	@echo "kdeploy   -- deploy as deployment and loadbalanced service"
+	@echo "krestart     -- k8s restart"
+	@echo "kdelete  -- delete deployment & service"
+	@echo "kmkpod    -- make a k8s pod"
+	@echo "kdelpod   -- delete k8s pod"
+	@echo "klogs     -- show logs for deployment (each pod)"
 
 -include .loccfg.mk
-REGISTRY ?=larryrau
+REGISTRY ?=larryrau/
 
 build:
 	go install infosrv.go
@@ -24,11 +25,21 @@ image:
 	docker build -t $(REGISTRY)infosrv -f Dockerfile .
 	docker tag $(REGISTRY)infosrv infosrv
 
+drun:
+	docker run --rm --name infosrv -it -p 9999:9999 $(REGISTRY)infosrv
+
+irun:
+	docker run -it -p 9999:9999 -u root --entrypoint /bin/sh $(REGISTRY)infosrv
+
 #push to registry
 toreg: image
 	docker push $(REGISTRY)infosrv
 
-loc:
+#
+# k8s helpers
+#
+
+kloc:
 	kubectl apply -k k8s/local
 
 kust:
@@ -40,41 +51,35 @@ kustrm:
 kustdump:
 	kustomize build k8s/local
 
-deploynovol:
+kdeploynovol:
 	kubectl apply -f service.yaml
 	cat deploy-novol.yaml |(REGISTRY=$(REGISTRY)  envsubst) >> dp
 	kubectl apply -f dp
 	@rm dp
 
-deploy: xx
+kdeploy: kk
 	kubectl apply -f pvolclaim.yaml
 	kubectl apply -f service.yaml
-	kubectl apply -f xx
-	@rm xx
+	kubectl apply -f kk
+	@rm kk
 
-redo:
+krestart:
 	kubectl rollout restart deployment/infosrv
 
-delete:
+kdelete:
 	kubectl delete service/infosrv
 	kubectl delete deployment/infosrv
 	kubectl delete pvc/data-vol
 
-mkpod:
+kmkpod:
 	kubectl run infosrv --image=$(REGISTRY)infosrv --port=9999
 	kubectl get pods
 
-delpod:
+kdelpod:
 	kubectl delete pod/infosrv
 
-drun:
-	docker run --rm --name infosrv -it -p 9999:9999 $(REGISTRY)infosrv
-
-irun:
-	docker run -it -p 9999:9999 -u root --entrypoint /bin/sh $(REGISTRY)infosrv
-
-logs:
+klogs:
 	kubectl logs --tail=100 -l name=infosrv
 
-xx:
-	cat deployment.yaml |(REGISTRY=$(REGISTRY)  envsubst) >> xx
+kk:
+	cat deployment.yaml |(REGISTRY=$(REGISTRY)  envsubst) >> kk
